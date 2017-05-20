@@ -1,0 +1,86 @@
+Problem Statement
+1.Create a HBase Filter to filter out the customer information where location is AUS
+
+hbase> scan 'customer', { FILTER => SingleColumnValueFilter.new(Bytes.toBytes('cf'),
+      Bytes.toBytes('location'), CompareFilter::CompareOp.valueOf('EQUAL'),
+      BinaryComparator.new(Bytes.toBytes('AUS')))}
+
+2.Create a Python program that connects to HBase using Thrift protocol and gets names of all
+HBase tables
+
+Steps
+1. First, we need to install all language specific dependencies on operating system where the Thrift server is started.
+2. Install Python dependencies for centos.
+sudo yum install boost-devel php-devel pcre-devel automake libtool flex bison pkgconfig gcc-c++ boost-devel libevent-devel zlib-devel python-devel ruby-devel libtool*
+
+3. Download the Thrift server using the below command:
+wget https://archive.apache.org/dist/thrift/0.6.0/thrift-0.6.0.tar.gz
+
+Untar the thrift file using the below command and then change the directory to thrift-0.6.1
+$ tar xfz thrift-0.6.1.tar.gz
+$ cd thrift-0.6.1/
+
+We need to perform configure operation from the thrift-0.6.1 directory.
+$./configure
+
+After performing the ‘Configure’ command we will be able to see what other languages are supported by Thrift.
+
+Building C++ Library ......... : no
+Building C (GLib) Library .... : no
+Building Java Library ........ : no
+Building C# Library .......... : no
+Building Python Library ...... : yes
+Building Ruby Library ........ : no
+Building Haskell Library ..... : no
+Building Perl Library ........ : no
+Building PHP Library ......... : yes
+Building Erlang Library ...... : yes
+
+The configure script is responsible for getting ready to build the software on your specific system. It makes sure all of the dependencies for the rest of the build and install process are available, and finds out whatever it needs to know to use those dependencies
+
+$ sudo make
+
+Once configure has done its job, we can invoke make to build the software. This runs a series of tasks defined in a Makefile to build the finished program from its source code
+
+$ sudo make install
+
+Now that the software is built and ready to run, the files can be copied to their final destinations. The make install command will copy the built program, and its libraries and documentation, to the correct location.
+After the installation of Thrift server, we need to need to compile Thrift and generate the language-specific bindings for accessing HBase.
+We need to generate HBase thrift python module using the below command:
+
+thrift --gen py Hbase.thrift
+
+Once this is done, you should have Thrift in your path.
+Note:
+You can find HBase.thrift in the below path:
+
+thrift -gen py /path/to/hbase/source/hbase-VERSION/src/main/resources/org/apache/hadoop/hbase/thrift/Hbase.thrift
+
+The above command will create ‘gen-py’ folder in your current working directory.
+The HBase Thrift Python module needs to be added to python path using the below command:
+
+export PYTHONPATH=$PYTHONPATH:/<path to gen-py>
+
+The HBase Thrift server needs to be started. This can be done by simply executing the following command:
+$hbase thrift start
+
+This command will start the HBase Thrift server on port 9090, which is the default port.
+We need to open a new terminal and then we should ensure that in HBase we should ensure that we have already created the table, we can cross check the list of tables in HBase by typing the command list.
+Note: Do not shut down the terminal where thrift server has started.
+
+We need to write the code given below and then save it with the extension .py and in our case we have saved the code in a file with name table.py and then execute it by using the command shown in the below screen shot to print all the tables name on the terminal.
+
+from thrift.transport.TSocket import TSocket
+from thrift.transport.TTransport import TBufferedTransport
+from thrift.protocol import TBinaryProtocol
+from hbase import Hbase 
+ 
+transport = TBufferedTransport(TSocket('localhost', 9090))
+transport.open()
+protocol = TBinaryProtocol.TBinaryProtocol(transport)
+client = Hbase.Client(protocol)
+print(client.getTableNames())
+
+We can see that by executing the python script we are able to fetch the name of the table in HBase.
+
+
